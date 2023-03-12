@@ -1,0 +1,44 @@
+# Use root/example as user/password credentials
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - '5432:5432'
+    volumes:
+      - mysql:/var/lib/mysql
+  cache:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning
+    volumes: 
+      - cache:/data
+  web:
+    build: .
+    command: python manage.py runserver localhost:8000
+    ports: 
+      - 8000:8000
+    depends_on:
+      - db
+      - cache
+    environment:
+      DB_NAME: chronicle
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: david_lioner
+      DB_PASSWORD: root
+
+      REDIS_HOST: cache
+      REDIS_PORT: 6379
+    volumes:
+      - .:/code
+
+volumes:
+  mysql:
+  cache:
+    driver: local
